@@ -45,5 +45,4 @@ A simple FastAPI web app for chatting with a locally hosted Llama LLM and asking
 - Uploaded PDF content is stored in memory for the current session only.
 - This is a demo app and not intended for production use.
 
-## License
-MIT License
+
