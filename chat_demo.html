@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Llama Chat Demo</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 2em; }
+        #chat-box { width: 100%; height: 200px; border: 1px solid #ccc; padding: 1em; overflow-y: auto; margin-bottom: 1em; }
+        #user-input { width: 80%; }
+        #send-btn, #upload-btn { margin-left: 0.5em; }
+    </style>
+</head>
+<body>
+    <h2>Llama Chat Demo</h2>
+    <div id="chat-box"></div>
+    <input type="text" id="user-input" placeholder="Type your message...">
+    <button id="send-btn">Send</button>
+    <br><br>
+    <input type="file" id="file-input" accept="application/pdf" style="display:none">
+    <button id="upload-btn">Upload PDF</button>
+
+    <script>
+        const chatBox = document.getElementById('chat-box');
+        const userInput = document.getElementById('user-input');
+        const sendBtn = document.getElementById('send-btn');
+        const uploadBtn = document.getElementById('upload-btn');
+        const fileInput = document.getElementById('file-input');
+
+        function appendMessage(sender, text) {
+            const msg = document.createElement('div');
+            msg.innerHTML = `<b>${sender}:</b> ${text}`;
+            chatBox.appendChild(msg);
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        sendBtn.onclick = async function() {
+            const message = userInput.value.trim();
+            if (!message) return;
+            appendMessage('You', message);
+            userInput.value = '';
+            const res = await fetch('/chat?message=' + encodeURIComponent(message));
+            const data = await res.json();
+            appendMessage('Llama', data.response);
+        };
+
+        userInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') sendBtn.click();
+        });
+
+        uploadBtn.onclick = function() {
+            fileInput.click();
+        };
+
+        fileInput.onchange = async function() {
+            const file = fileInput.files[0];
+            if (!file) return;
+            if (file.type !== "application/pdf") {
+                alert("Please upload a PDF file.");
+                return;
+            }
+            const formData = new FormData();
+            formData.append('file', file);
+            appendMessage('System', 'Uploading PDF...');
+            try {
+                const res = await fetch('/upload_pdf', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    appendMessage('System', 'PDF uploaded! You can now ask questions about its content.');
+                } else {
+                    appendMessage('System', 'Error: ' + (data.error || 'Failed to upload PDF.'));
+                }
+            } catch (e) {
+                appendMessage('System', 'Error uploading PDF.');
+            }
+        };
+    </script>
+</body>
+</html>
